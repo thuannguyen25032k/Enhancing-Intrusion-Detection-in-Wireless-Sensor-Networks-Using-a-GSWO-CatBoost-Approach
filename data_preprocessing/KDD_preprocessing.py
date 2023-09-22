@@ -164,8 +164,8 @@ if __name__ == "__main__":
         "-dir",
         type=str,
         action="store",
-        default=None,
-        required=True,
+        default="./data/NSL-KDD-Dataset",
+        required=False,
         help="Path to the data folder",
     )
     args = parser.parse_args()
