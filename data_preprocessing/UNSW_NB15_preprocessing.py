@@ -1,12 +1,20 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Sep 21 16:31:20 2023
+
+@author: Nguyen Minh Thuan
+"""
 # module imports
 import argparse
 import os
+import numpy as np
 
 import pandas as pd
 from matplotlib import pyplot as plt
 
 # processing imports
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 print("Welcome!")
 
@@ -73,33 +81,45 @@ def visualize(data):
     plt.savefig("plots/Pie_chart_multi.png")
     plt.show()
 
+def split_data(X, y):
+    """Split the data into train and validation"""
+    X_train, X_valid, y_train, y_valid = train_test_split(
+            X,
+            y,
+            test_size=0.2,
+            random_state=42
+        )
+    return (X_train, y_train), (X_valid, y_valid)
 
 def UNSW_NB15_processing(data_dir):
     """Preprocessing of the UNSW_NB15 data"""
     # loading data
-    raw_train_data = load_data(data_dir, "UNSW_NB15_training_set")
-    raw_test_data = load_data(data_dir, "UNSW_NB15_testing_set")
-    features = load_data(data_dir, "UNSW_NB15_features")
-    train_data = convert_to_nummerics(raw_train_data, features)
-    test_data = convert_to_nummerics(raw_test_data, features)
+    raw_train_data = load_data(data_dir, "UNSW_NB15_training-set")
+    raw_train_data['service']= np.where(raw_train_data['service'] == '-', 'other', raw_train_data['service'])
+    raw_test_data = load_data(data_dir, "UNSW_NB15_testing-set")
+    raw_test_data['service']= np.where(raw_test_data['service'] == '-', 'other', raw_test_data['service'])
+    # features = load_data(data_dir, "UNSW_NB15_features")
+    # print(features)
+    # train_data = convert_to_nummerics(raw_train_data, features)
+    # test_data = convert_to_nummerics(raw_test_data, features)
 
     # transforming data into the format expected by the model
-    train_data_X, train_data_Y = transform(train_data.drop("id", axis=1))
-    test_data_X, test_data_Y = transform(test_data.drop("id", axis=1))
+    train_data_X, train_data_Y = transform(raw_train_data.drop("id", axis=1))
+    test_data_X, test_data_Y = transform(raw_test_data.drop("id", axis=1))
 
     # visualize data
-    # visualize(train_data)
-    # visualize(test_data)
+    # visualize(raw_train_data)
+    # visualize(raw_train_data)
 
     # selecting numeric attributes columns from data
-    numeric_cols = list(train_data.select_dtypes(include="number").columns)
+    numeric_cols = list(raw_train_data.select_dtypes(include="number").columns)
     numeric_cols.remove("id")
     numeric_cols.remove("label")
     scaler = StandardScaler()
     train_data_X, test_data_X = scale(train_data_X, test_data_X, 
                                       numeric_cols, scaler)
-    print(train_data_X.head())
-    return train_data_X, test_data_X, train_data_Y, test_data_Y
+    (X_train, y_train), (X_valid, y_valid) = split_data(train_data_X,train_data_Y)
+    return (X_train, y_train), (X_valid, y_valid), (test_data_X, test_data_Y)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Sep 15 16:31:20 2023
+
+@author: Nguyen Minh Thuan
+"""
 # module imports
 import numpy as np
 import pandas as pd
@@ -8,9 +14,11 @@ import os
 from collections import defaultdict
 
 # processing imports
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
 
 print("Welcome!")
 HEADER_NAMES = [
@@ -89,7 +97,17 @@ def visualize(transformed_data):
     data_attack_cats = transformed_data["attack_category"].value_counts()
     data_attack_types.plot(kind="barh", figsize=(20, 10), fontsize=20)
     data_attack_cats.plot(kind="barh", figsize=(20, 10), fontsize=30)
+    plt.show()
 
+def split_data(X, y):
+    """Split the data into train and validation"""
+    X_train, X_valid, y_train, y_valid = train_test_split(
+            X,
+            y,
+            test_size=0.2,
+            random_state=42
+        )
+    return (X_train, y_train), (X_valid, y_valid)
 
 def KDD_processing(data_dir):
     column_names = np.array(HEADER_NAMES)
@@ -126,8 +144,8 @@ def KDD_processing(data_dir):
     test_data_X, test_data_Y = transform(test_data, attack_mapping)
 
     # Visualizing the data
-    visualize(train_data)
-    visualize(test_data)
+    # visualize(train_data)
+    # visualize(test_data)
 
     # Analyzing the su_attempted column
     train_data.groupby(["su_attempted"]).size()
@@ -154,7 +172,8 @@ def KDD_processing(data_dir):
     # Let's proceed with StandardScaler- Apply to all the numeric columns
     scaler = StandardScaler()
     train_data_X, test_data_X = scale(train_data_X, test_data_X, numeric_cols, scaler)
-    return train_data_X, test_data_X, train_data_Y, test_data_Y
+    (X_train, y_train), (X_valid, y_valid) = split_data(train_data_X,train_data_Y)
+    return (X_train, y_train), (X_valid, y_valid), (test_data_X, test_data_Y)
 
 
 if __name__ == "__main__":
