@@ -5,20 +5,18 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, zero_one_loss
 
 class TrainingClassifier(object):
-    def __init__(self):
+    def __init__(self, parameters):
+        self.parameters = parameters
+        self.parameters.update({# 'use_best_model': True,
+                                'bootstrap_type': "Bayesian",
+                                'loss_function': 'MultiClass',
+                                'eval_metric': 'TotalF1',
+                                "random_seed": 42,
+                                "od_type": 'Iter',
+                                'od_wait': 20,
+                                "task_type":"GPU"})
         self.model = CatBoostClassifier(
-            learning_rate=0.3, 
-            iterations=500, 
-            max_depth=4, 
-            l2_leaf_reg=1, 
-            bagging_temperature=0.5,
-            use_best_model=True,
-            # boosting_type="Ordered", # Valid values: string, any of the following: ("Auto", "Ordered", "Plain").
-            bootstrap_type="Bayesian",
-            loss_function='MultiClass', 
-            eval_metric=metrics.Accuracy(),
-            od_type='Iter',
-            od_wait=20,
+            **self.parameters
             )
         self.cbe_encoder = ce.cat_boost.CatBoostEncoder() 
 
@@ -38,6 +36,7 @@ class TrainingClassifier(object):
             categorical_features_indices is the list of number indicating the index of categorical featurers in dataset
         '''
         (X_train, y_train) = traning_data
+        # print(traning_data)
         self.model.fit(
             X_train, y_train, 
             cat_features= categorical_features_indices,
@@ -77,6 +76,34 @@ class TrainingClassifier(object):
         print("Confusion Matrix:\n", confusion_mat)
         class_report = classification_report(y_test, y_pred)
         print("Classification Report:\n", class_report)
+
+    def __print_cv_summary(cv_data):
+        cv_data.head(10)
+
+        best_value = cv_data['test-Logloss-mean'].min()
+        best_iter = cv_data['test-Logloss-mean'].values.argmin()
+
+        print('Best validation Logloss score : {:.4f}±{:.4f} on step {}'.format(
+            best_value,
+            cv_data['test-Logloss-std'][best_iter],
+            best_iter)
+        )
+
+    def cross_validate(self, whole_data, categorical_features_indices):
+        (X,y) = whole_data
+        train_pool = Pool(data=X, label=y, cat_features=categorical_features_indices, has_header=True)
+        cv_data = cv(
+                params = params,
+                pool = train_pool,
+                fold_count=5,
+                shuffle=True,
+                partition_random_seed=0,
+                plot=True,
+                stratified=True,
+                verbose=False
+                )
+
+        self.__print_cv_summary(cv_data)
 
     def visulize_results(self):
         # Create bar plots for precision, recall, and F1-score

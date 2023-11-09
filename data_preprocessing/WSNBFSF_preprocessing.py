@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 22 16:31:20 2023
+Created on Tue Oct 03rd 16:31:20 2023
 
 @author: Nguyen Minh Thuan
 """
@@ -9,8 +9,9 @@ import numpy as np
 import glob
 import os
 import argparse
+import matplotlib.pyplot as plt
 
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder, QuantileTransformer
+# from sklearn.preprocessing import OneHotEncoder, LabelEncoder, QuantileTransformer
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
@@ -18,7 +19,7 @@ from sklearn.compose import ColumnTransformer
 
 # DATA_DIR  = os.path.join(os.path.abspath("."), "data")
 
-class CICIDS2017Preprocessor(object):
+class WSNBFSFPreprocessor(object):
     def __init__(self, data_path, training_size, validation_size, testing_size):
         self.data_path = data_path
         self.training_size = training_size
@@ -30,25 +31,15 @@ class CICIDS2017Preprocessor(object):
         self.label = None
 
     def read_data(self):
-        """"""
-        filenames = glob.glob(os.path.join(self.data_path,'*.csv'))
-        datasets = [pd.read_csv(filename) for filename in filenames]
+        """Read the data from the file."""
+        self.data = pd.read_csv(self.data_path)
 
-        # Remove white spaces and rename the columns
-        for dataset in datasets:
-            dataset.columns = [self._clean_column_name(column) for column in dataset.columns]
-
-        # Concatenate the datasets
-        self.data = pd.concat(datasets, axis=0, ignore_index=True)
-        self.data.drop(labels=['fwd_header_length.1'], axis= 1, inplace=True)
-
-    def _clean_column_name(self, column):
-        """"""
-        column = column.strip(' ')
-        column = column.replace('/', '_')
-        column = column.replace(' ', '_')
-        column = column.lower()
-        return column
+    def visualize(self):
+        """Visualize the data."""
+        self.data["Class"].value_counts().plot.bar()  
+        print(self.data)
+        print(self.data.columns) 
+        # plt.show()     
 
     def remove_duplicate_values(self):
         """"""
@@ -78,69 +69,11 @@ class CICIDS2017Preprocessor(object):
 
         # Drop the constant features
         self.data.drop(labels=constant_features, axis=1, inplace=True)
-
-    def remove_correlated_features(self, threshold=0.99):
-        """"""
-        # Correlation matrix
-        data_corr = self.data.corr()
-
-        # Create & Apply mask
-        mask = np.triu(np.ones_like(data_corr, dtype=bool))
-        tri_df = data_corr.mask(mask)
-
-        # Find Features that meet the threshold
-        correlated_features = [c for c in tri_df.columns if any(tri_df[c] > threshold)]
-
-        # Drop the highly correlated features
-        self.data.drop(labels=correlated_features, axis=1, inplace=True)
-
-    def group_labels(self):
-        """"""
-        # Proposed Groupings
-        # attack_group = {
-        #     'BENIGN': 'Benign',
-        #     'PortScan': 'PortScan',
-        #     'DDoS': 'DoS/DDoS',
-        #     'DoS Hulk': 'DoS/DDoS',
-        #     'DoS GoldenEye': 'DoS/DDoS',
-        #     'DoS slowloris': 'DoS/DDoS', 
-        #     'DoS Slowhttptest': 'DoS/DDoS',
-        #     'Heartbleed': 'DoS/DDoS',
-        #     'FTP-Patator': 'Brute Force',
-        #     'SSH-Patator': 'Brute Force',
-        #     'Bot': 'Botnet ARES',
-        #     'Web Attack � Brute Force': 'Web Attack',
-        #     'Web Attack � Sql Injection': 'Web Attack',
-        #     'Web Attack � XSS': 'Web Attack',
-        #     'Infiltration': 'Infiltration'
-        # }
-
-        attack_group = {
-            'BENIGN': 'Benign',
-            'PortScan': 'PortScan',
-            'DDoS': 'DDoS',
-            'DoS Hulk': 'DoS Hulk',
-            'DoS GoldenEye': 'DoS GoldenEye',
-            'DoS slowloris': 'DoS slowloris', 
-            'DoS Slowhttptest': 'DoS Slowhttptest',
-            'Heartbleed': 'Heartbleed',
-            'FTP-Patator': 'FTP-Patator',
-            'SSH-Patator': 'SSH-Patator',
-            'Bot': 'Botnet ARES',
-            'Web Attack � Brute Force': 'Web Attack Brute Force',
-            'Web Attack � Sql Injection': 'Web Attack Sql Injection',
-            'Web Attack � XSS': 'Web Attack XSS',
-            'Infiltration': 'Infiltration'
-        }
-
-        # Create grouped label column
-        self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
-        self.data = self.data.drop(self.data[self.data['label_category']=="Benign"].sample(frac=0.84).index)
         
     def train_valid_test_split(self):
         """"""
-        self.labels = self.data['label_category']
-        self.features = self.data.drop(labels=['label', 'label_category'], axis=1)
+        self.labels = self.data['Class']
+        self.features = self.data.drop(labels=['Class'], axis=1)
 
         X_train, X_test, y_train, y_test = train_test_split(
             self.features,
@@ -161,6 +94,7 @@ class CICIDS2017Preprocessor(object):
     def scale(self, training_set, validation_set, testing_set):
         """"""
         (X_train, y_train), (X_val, y_val), (X_test, y_test) = training_set, validation_set, testing_set
+        
         categorical_features = self.features.select_dtypes(exclude=["number"]).columns
         numeric_features = self.features.select_dtypes(exclude=[object]).columns
 
@@ -185,37 +119,30 @@ class CICIDS2017Preprocessor(object):
 
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
-def CICIDS2017_processing(data_dir):
-    cicids2017 = CICIDS2017Preprocessor(
-        data_path=os.path.join(data_dir, "MachineLearningCVE"),
+def WSNBFSF_processing(data_dir):
+    WSNBFSF = WSNBFSFPreprocessor(
+        data_path=os.path.join(data_dir, "WSNBFSFdataset.csv"),
         training_size=0.6,
         validation_size=0.2,
         testing_size=0.2
     )
 
     # Read datasets
-    cicids2017.read_data()
+    WSNBFSF.read_data()
 
     # Remove NaN, -Inf, +Inf, Duplicates
-    cicids2017.remove_duplicate_values()
-    cicids2017.remove_missing_values
-    cicids2017.remove_infinite_values()
+    WSNBFSF.remove_duplicate_values()
+    WSNBFSF.remove_missing_values()
+    WSNBFSF.remove_infinite_values()
 
     # Drop constant & correlated features
-    cicids2017.remove_constant_features()
-    # cicids2017.remove_correlated_features()
-    # print(cicids2017.data.info())
-
-    # Create new label category
-    cicids2017.group_labels()
-    
+    WSNBFSF.remove_constant_features()
+    # # print(cicids2017.data.info())    
 
     # Split & Normalise data sets
-    training_set, validation_set, testing_set            = cicids2017.train_valid_test_split()
-    (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
-    X_train.index = pd.RangeIndex(0, len(X_train), step=1) 
-    y_train.index = pd.RangeIndex(0, len(X_train), step=1)
-    # print(X_test, y_test)
+    training_set, validation_set, testing_set            = WSNBFSF.train_valid_test_split()
+    (X_train, y_train), (X_val, y_val), (X_test, y_test) = WSNBFSF.scale(training_set, validation_set, testing_set)
+    # print(X_train, y_train)
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
@@ -227,9 +154,9 @@ if __name__ == "__main__":
         "-dir",
         type=str,
         action="store",
-        default="./data/CICIDS17/MachineLearningCSV",
+        default="./data/WSNBFSFDataset",
         required=False,
         help="Path to the data folder",
     )
     args = parser.parse_args()
-    CICIDS2017_processing(args.data_dir)
+    WSNBFSF_processing(args.data_dir)
