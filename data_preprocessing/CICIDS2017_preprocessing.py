@@ -97,41 +97,41 @@ class CICIDS2017Preprocessor(object):
     def group_labels(self):
         """"""
         # Proposed Groupings
-        # attack_group = {
-        #     'BENIGN': 'Benign',
-        #     'PortScan': 'PortScan',
-        #     'DDoS': 'DoS/DDoS',
-        #     'DoS Hulk': 'DoS/DDoS',
-        #     'DoS GoldenEye': 'DoS/DDoS',
-        #     'DoS slowloris': 'DoS/DDoS', 
-        #     'DoS Slowhttptest': 'DoS/DDoS',
-        #     'Heartbleed': 'DoS/DDoS',
-        #     'FTP-Patator': 'Brute Force',
-        #     'SSH-Patator': 'Brute Force',
-        #     'Bot': 'Botnet ARES',
-        #     'Web Attack � Brute Force': 'Web Attack',
-        #     'Web Attack � Sql Injection': 'Web Attack',
-        #     'Web Attack � XSS': 'Web Attack',
-        #     'Infiltration': 'Infiltration'
-        # }
-
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan',
-            'DDoS': 'DDoS',
-            'DoS Hulk': 'DoS Hulk',
-            'DoS GoldenEye': 'DoS GoldenEye',
-            'DoS slowloris': 'DoS slowloris', 
-            'DoS Slowhttptest': 'DoS Slowhttptest',
-            'Heartbleed': 'Heartbleed',
-            'FTP-Patator': 'FTP-Patator',
-            'SSH-Patator': 'SSH-Patator',
+            'DDoS': 'DoS/DDoS',
+            'DoS Hulk': 'DoS/DDoS',
+            'DoS GoldenEye': 'DoS/DDoS',
+            'DoS slowloris': 'DoS/DDoS', 
+            'DoS Slowhttptest': 'DoS/DDoS',
+            'Heartbleed': 'DoS/DDoS',
+            'FTP-Patator': 'Brute Force',
+            'SSH-Patator': 'Brute Force',
             'Bot': 'Botnet ARES',
-            'Web Attack � Brute Force': 'Web Attack Brute Force',
-            'Web Attack � Sql Injection': 'Web Attack Sql Injection',
-            'Web Attack � XSS': 'Web Attack XSS',
+            'Web Attack � Brute Force': 'Web Attack',
+            'Web Attack � Sql Injection': 'Web Attack',
+            'Web Attack � XSS': 'Web Attack',
             'Infiltration': 'Infiltration'
         }
+
+        # attack_group = {
+        #     'BENIGN': 'Benign',
+        #     'PortScan': 'PortScan',
+        #     'DDoS': 'DDoS',
+        #     'DoS Hulk': 'DoS Hulk',
+        #     'DoS GoldenEye': 'DoS GoldenEye',
+        #     'DoS slowloris': 'DoS slowloris', 
+        #     'DoS Slowhttptest': 'DoS Slowhttptest',
+        #     'Heartbleed': 'Heartbleed',
+        #     'FTP-Patator': 'FTP-Patator',
+        #     'SSH-Patator': 'SSH-Patator',
+        #     'Bot': 'Botnet ARES',
+        #     'Web Attack � Brute Force': 'Web Attack Brute Force',
+        #     'Web Attack � Sql Injection': 'Web Attack Sql Injection',
+        #     'Web Attack � XSS': 'Web Attack XSS',
+        #     'Infiltration': 'Infiltration'
+        # }
 
         # Create grouped label column
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
@@ -155,7 +155,7 @@ class CICIDS2017Preprocessor(object):
             test_size=self.testing_size / (self.validation_size + self.testing_size),
             random_state=42
         )
-    
+        print(f"y_total: {self.labels.value_counts()}, y_test: {y_test.value_counts()}")
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
     def scale(self, training_set, validation_set, testing_set):
@@ -188,9 +188,9 @@ class CICIDS2017Preprocessor(object):
 def CICIDS2017_processing(data_dir):
     cicids2017 = CICIDS2017Preprocessor(
         data_path=os.path.join(data_dir, "MachineLearningCVE"),
-        training_size=0.6,
+        training_size=0.5,
         validation_size=0.2,
-        testing_size=0.2
+        testing_size=0.3
     )
 
     # Read datasets

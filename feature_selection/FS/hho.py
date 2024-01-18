@@ -2,7 +2,7 @@
 
 import numpy as np
 from numpy.random import rand
-from FS.functionHO import Fun
+from feature_selection.FS.functionHO import Fun
 import math
 
 

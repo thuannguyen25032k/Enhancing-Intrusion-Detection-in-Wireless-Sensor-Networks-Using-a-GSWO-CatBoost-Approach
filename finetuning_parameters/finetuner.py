@@ -3,7 +3,7 @@
 import numpy as np
 import random
 from numpy.random import rand
-from finetuning_parameters.utils import Fun, quantize_to_binary_array, dequantize_from_binary_array
+from finetuning_parameters.utils import *
 
 def init_position(lb, ub, N, dim):
     """
@@ -57,13 +57,13 @@ def multiple_gene_crossover(parent1, parent2, num_genes):
         raise ValueError("Parent chromosomes must have the same length.")
 
     # Random one dimension from 1 to dim
-    index   = np.random.randint(low = 1, high = len(parent1)-1) # why
+    index   = np.random.randint(low = 1, high = len(parent1)-num_genes) # why
     # Crossover
-    if index > round(len(parent1/2)):
-        child1 = np.concatenate((parent1[0:index] , parent2[index:]))
-        # child2 = np.concatenate((parent2[0:index] , parent1[index:]))
-    else:
-        child1 = np.concatenate((parent2[0:index] , parent1[index:]))
+    # if index > round(len(parent1/2)):
+    child1 = np.concatenate((parent1[0:index] , parent2[index:index+num_genes], parent1[index+num_genes:]))
+    #     # child2 = np.concatenate((parent2[0:index] , parent1[index:]))
+    # else:
+    #       child1 = np.concatenate((parent2[0:index] , parent1[index:]))
     
     return child1
 
@@ -207,13 +207,22 @@ def finetuner(xtrain, ytrain, opts):
             # Parameter l, random number in [-1,1]
             l = -1 + 2 * rand()  
             # {3} Bubble-net attacking 
-            for d in range(dim):
-                # Distance of whale to prey
-                dist   = abs(Xgb[0,d] - Xexploit[i,d])
-                # Position update (2.5)
-                Xexploit[i,d] = dist * np.exp(b * l) * np.cos(2 * np.pi * l) + Xgb[0,d] 
-                # Boundary
-                Xexploit[i,d] = boundary(Xexploit[i,d], lb[0,d], ub[0,d])
+            if p<0.5:
+                for d in range(dim):
+                    # Compute D (2.1)
+                    Dx     = abs(C * Xgb[0,d] - Xexploit[i,d])
+                    # Position update (2.2)
+                    Xexploit[i,d] = Xgb[0,d] - A * Dx
+                    # Boundary
+                    Xexploit[i,d] = boundary(Xexploit[i,d], lb[0,d], ub[0,d])
+            else:
+                for d in range(dim):
+                    # Distance of whale to prey
+                    dist   = abs(Xgb[0,d] - Xexploit[i,d])
+                    # Position update (2.5)
+                    Xexploit[i,d] = dist * np.exp(b * l) * np.cos(2 * np.pi * l) + Xgb[0,d] 
+                    # Boundary
+                    Xexploit[i,d] = boundary(Xexploit[i,d], lb[0,d], ub[0,d])
 
         # Processing for Exploratory sub-population
         for i in range(K_explore):
@@ -258,7 +267,7 @@ def finetuner(xtrain, ytrain, opts):
             P1      = copy_Xexplore[k1,:].copy()    # Parent 1
             P2      = copy_Xexploit[k2,:].copy()    # Parent 2
             # Crossover
-            X1[i,:] = multiple_gene_crossover(P1, P2, 14)
+            X1[i,:] = multiple_gene_crossover(P1, P2, round(random.uniform(0.1,0.45)*dim/2))
             # Mutation
             for d in range(dim):
                 if rand() < MR:
@@ -304,13 +313,16 @@ def finetuner(xtrain, ytrain, opts):
         FF      = np.concatenate((fit , fit_new), axis=0)[index]
         XX = XX[FF[:,0]<1,:]
         FF = FF[FF[:,0]<1,:]
-        if XX.shape[0] >= N:
+        altruism_indi = XX.shape[0]-N
+        if altruism_indi>0:
             # Sort in ascending order
             # print(f"Length of Fit function before sorting: {len(FF)}")
-            ind = np.argsort(FF, axis=0)
-            for i in range(N):
-                X[i,:]   = XX[ind[i,0],:]
-                fit[i,0] = FF[ind[i,0]]   
+            # ind = np.argsort(FF, axis=0)
+            # for i in range(N):
+            #     X[i,:]   = XX[ind[i,0],:]
+            #     fit[i,0] = FF[ind[i,0]]   
+            X, fit = conditional_choice(XX, FF, altruism_indi, dim)
+
         else: 
             print("==========Regenerate population=============")
             # Initialize position

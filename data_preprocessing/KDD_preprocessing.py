@@ -148,6 +148,7 @@ def KDD_processing(data_dir):
     # Transforming the data
     train_data_X, train_data_Y = transform(train_data, attack_mapping)
     test_data_X, test_data_Y = transform(test_data, attack_mapping)
+    print(print(f"y_train: {train_data_Y.value_counts()}, y_test: {test_data_Y.value_counts()}"))
 
     # Visualizing the data
     # visualize(train_data)

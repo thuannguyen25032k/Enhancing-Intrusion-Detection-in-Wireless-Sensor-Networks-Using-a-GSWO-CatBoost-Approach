@@ -4,20 +4,28 @@ import numpy as np
 import random
 from numpy.random import rand
 from feature_selection.FS.functionHO import Fun
-from feature_selection.FS.Alt.altruism import generate_scc, generate_pcc, Altruism
+from feature_selection.FS.Alt.conditional_choice import conditional_choice
 
+
+# def init_position(lb, ub, N, dim):
+#     """
+#     Initialize the position of Whales with:
+#     N: number of population of Whales in the Algorithm
+#     lb: Lower bound
+#     ub: Upper bound
+#     """
+#     X = np.ones([N, dim], dtype='float')
+#     for i in range(N-1):
+#         for d in range(dim):
+#             X[i,d] = lb[0,d] + (ub[0,d] - lb[0,d]) * rand()       
+    
+#     return X
 
 def init_position(lb, ub, N, dim):
-    """
-    Initialize the position of Whales with:
-    N: number of population of Whales in the Algorithm
-    lb: Lower bound
-    ub: Upper bound
-    """
-    X = np.ones([N, dim], dtype='float')
-    for i in range(N-1):
+    X = np.zeros([N, dim], dtype='float')
+    for i in range(N):
         for d in range(dim):
-            X[i,d] = lb[0,d] + (ub[0,d] - lb[0,d]) * rand()       
+            X[i,d] = lb[0,d] + (ub[0,d] - lb[0,d]) * rand()        
     
     return X
 
@@ -58,13 +66,13 @@ def multiple_gene_crossover(parent1, parent2, num_genes):
         raise ValueError("Parent chromosomes must have the same length.")
 
     # Random one dimension from 1 to dim
-    index   = np.random.randint(low = 1, high = len(parent1)-1) # why
+    index   = np.random.randint(low = 1, high = len(parent1)-num_genes) # why
     # Crossover
     if index > round(len(parent1/2)):
-        child1 = np.concatenate((parent1[0:index] , parent2[index:]))
-        # child2 = np.concatenate((parent2[0:index] , parent1[index:]))
-    else:
+    # child1 = np.concatenate((parent1[0:index] , parent2[index:index+num_genes], parent1[index+num_genes:]))
         child1 = np.concatenate((parent2[0:index] , parent1[index:]))
+    else:
+        child1 = np.concatenate((parent1[0:index] , parent2[index:]))
     
     return child1
 
@@ -86,7 +94,7 @@ def jfs(xtrain, ytrain, opts):
     ub      = 1
     lb      = 0
     thres   = 0.5
-    b       = 1 # constant
+    b       = 1     # constant
     CR      = 0.7     # crossover rate
     MR      = 0.2    # mutation rate
 
@@ -142,9 +150,6 @@ def jfs(xtrain, ytrain, opts):
     print("Generation:", t + 1)
     print("Best (WOA):", curve[0,t])
     t += 1
-    # Altruism prerequisite setup
-    scc = generate_scc(xtrain, ytrain)
-    pcc = generate_pcc(xtrain, ytrain)
 
     while t < max_iter:
         # Define a, linearly decreases from 2 to 0 
@@ -269,7 +274,7 @@ def jfs(xtrain, ytrain, opts):
             P1      = copy_Xexplore[k1,:].copy()    # Parent 1
             P2      = copy_Xexploit[k2,:].copy()    # Parent 2
             # Crossover
-            X1[i,:] = multiple_gene_crossover(P1, P2, 14)
+            X1[i,:] = multiple_gene_crossover(P1, P2, round(random.uniform(0.1,0.45)*dim/2))
             # Mutation
             for d in range(dim):
                 if rand() < MR:
@@ -314,19 +319,6 @@ def jfs(xtrain, ytrain, opts):
         print("Best (WOA_GA):", curve[0,t])
         t += 1 
 
-        """
-        # Elitism 
-        XX  = np.concatenate((X , x1), axis=0)
-        FF  = np.concatenate((fit , fit_new), axis=0)
-
-        # Sort in ascending order
-        print(f"Length of Fit function before sorting: {len(fit)}")
-        ind = np.argsort(FF, axis=0)
-        for i in range(N):
-            X[i,:]   = XX[ind[i,0],:]
-            fit[i,0] = FF[ind[i,0]]    
-        """
-
         # implementing Altruism filter 
         new_pop = np.concatenate((Xbin, Xbinnew), axis=0)
         # print(f"shape of population before removing duplicates: {new_pop.shape}")
@@ -337,9 +329,7 @@ def jfs(xtrain, ytrain, opts):
         altruism_indi = new_pop.shape[0]-N
         if altruism_indi>0:
             # print(f"The number of population before evaluation: {new_pop.shape[0]} and the number of altruism individuals after evaluation: {altruism_indi}")
-            X, fit = Altruism(new_pop, new_Fit, 
-                            scc_score = scc, pcc_score = pcc, 
-                            altruism_indi = altruism_indi, pop_size = N, alpha = 0.5)
+            X, fit = conditional_choice(new_pop, new_Fit, altruism_indi, dim)
         else: 
             # print("==========Regenerate population=============")
             # Initialize position
@@ -375,7 +365,7 @@ def jfs(xtrain, ytrain, opts):
             Xexploit = Xexploit[ind[0:round(K_exploit/2),0],:]
             fitExploit = fitExploit[ind[0:round(K_exploit/2),0],:]
             K_exploit   = len(Xexploit)
-        # print(f" length of Xexplore, Xexploit, Xhesitate is {K_explore, K_exploit, K_hesitate} respectively")
+        print(f" length of Xexplore, Xexploit, Xhesitate is {K_explore, K_exploit, K_hesitate} respectively, and fit: {fit}")
 
 
     # Best feature subset

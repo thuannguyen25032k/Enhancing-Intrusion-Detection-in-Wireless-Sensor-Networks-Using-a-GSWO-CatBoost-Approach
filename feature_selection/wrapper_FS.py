@@ -36,8 +36,8 @@ class FeatureSelector(object):
 
         # parameters
         k    = 5     # k-value in KNN
-        N    = 10    # number of chromosomes
-        T    = 50   # maximum number of generations
+        N    = 15    # number of chromosomes
+        T    = 30   # maximum number of generations
         CR   = 0.8
         MR   = 0.01
         opts = {'k':k, 'fold':fold, 'N':N, 'T':T, 'CR':CR, 'MR':MR}
@@ -46,6 +46,7 @@ class FeatureSelector(object):
         print("Start preforming genetic algorithm for feature selection")
         fmdl = jfs(feat, label, opts)
         self.sel_col = fmdl['sf']
+        print("Curve is:", fmdl['c'])
         return self.X_train.iloc[:, self.sel_col], self.y_train, self.X_test.iloc[:, self.sel_col], self.y_test
     
     def PSO(self):
@@ -63,8 +64,8 @@ class FeatureSelector(object):
 
         # parameter
         k    = 5     # k-value in KNN
-        N    = 10    # number of particles
-        T    = 100   # maximum number of iterations
+        N    = 30    # number of particles
+        T    = 30   # maximum number of iterations
         w    = 0.9
         c1   = 2
         c2   = 2
@@ -91,8 +92,8 @@ class FeatureSelector(object):
 
         # parameters
         k    = 5     
-        N    = 10    
-        T    = 50   
+        N    = 30    
+        T    = 30   
         b  = 1    
         opts = {'k':k, 'fold':fold, 'N':N, 'T':T, 'b':b}
 
@@ -100,6 +101,7 @@ class FeatureSelector(object):
         print("Start preforming the Whale Optimization Algorithm for feature selection")
         fmdl = jfs(feat, label, opts)
         self.sel_col = fmdl['sf']
+        print("Curve is:", fmdl['c'])
         return self.X_train.iloc[:, self.sel_col], self.y_train, self.X_test.iloc[:, self.sel_col], self.y_test
     
     def WOA_GA(self):
@@ -117,11 +119,11 @@ class FeatureSelector(object):
 
         # parameters
         k    = 5     
-        N    = 50    
+        N    = 30    
         T    = 30  
         b    = 1
-        CR   = 0.7
-        MR   = 0.2    
+        CR   = 0.8
+        MR   = 0.1    
         opts = {'k':k, 'fold':fold, 'N':N, 'T':T, 'b':b, 'CR':CR, 'MR':MR}
 
         # perform the Genetic Whale Optimization Algorithm for feature selection
@@ -129,6 +131,7 @@ class FeatureSelector(object):
         fmdl = jfs(feat, label, opts)
         self.sel_col = fmdl['sf']
         print(f"feature collumns: {self.sel_col}")
+        print("Curve is:", fmdl['c'])
         return self.X_train.iloc[:, self.sel_col], self.y_train, self.X_test.iloc[:, self.sel_col], self.y_test
     
     def BA(self):
@@ -146,8 +149,8 @@ class FeatureSelector(object):
 
         # parameters
         k    = 5     # k-value in KNN
-        N    = 10    # number of particles
-        T    = 100   # maximum number of iterations
+        N    = 30    # number of particles
+        T    = 30   # maximum number of iterations
         fmax   = 2      # maximum frequency
         fmin   = 0      # minimum frequency
         alpha  = 0.9    # constant
@@ -160,6 +163,7 @@ class FeatureSelector(object):
         print("Start preforming the Bat Algorithm for feature selection")
         fmdl = jfs(feat, label, opts)
         self.sel_col = fmdl['sf']
+        print("Curve is:", fmdl['c'])
         return self.X_train.iloc[:, self.sel_col], self.y_train, self.X_test.iloc[:, self.sel_col], self.y_test
     
     def CS(self):
@@ -285,8 +289,8 @@ class FeatureSelector(object):
 
         # parameters
         k    = 5     # k-value in KNN
-        N    = 10    # number of particles
-        T    = 100   # maximum number of iterations
+        N    = 30    # number of particles
+        T    = 30   # maximum number of iterations
         alpha  = 2    # constant
         opts = {'k':k, 'fold':fold, 'N':N, 'T':T, 'alpha':alpha}
 
@@ -294,6 +298,7 @@ class FeatureSelector(object):
         print("Start preforming the Sine Cosine Algorithm for feature selection")
         fmdl = jfs(feat, label, opts)
         self.sel_col = fmdl['sf']
+        print("Curve is:", fmdl['c'])
         return self.X_train.iloc[:, self.sel_col], self.y_train, self.X_test.iloc[:, self.sel_col], self.y_test
 
 

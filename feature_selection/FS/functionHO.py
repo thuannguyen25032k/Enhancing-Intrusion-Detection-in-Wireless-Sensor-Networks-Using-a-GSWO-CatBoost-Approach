@@ -20,8 +20,8 @@ def error_rate(xtrain, ytrain, x, opts):
     xtrain, xvalid, ytrain, yvalid = train_test_split(
             xt.iloc[:, x==1],
             yt,
-            test_size=0.2,
-            shuffle=True
+            test_size=0.3,
+            random_state=42,
         )
 
     xtest  = xv.iloc[:, x==1]
@@ -31,8 +31,8 @@ def error_rate(xtrain, ytrain, x, opts):
     # mdl     = RandomForestClassifier(criterion='gini', max_depth=30, n_estimators=72, random_state=0, bootstrap=False, min_samples_split = 2)
     
     # Training new model 
-    params = {'iterations': 120, 'learning_rate': 0.12575, 'depth': 2, 'l2_leaf_reg': 2.0, 'random_strength': 1e-08, 'bagging_temperature': 1e-08,
-              'bootstrap_type': "Bayesian", "loss_function": 'MultiClass', "eval_metric":"TotalF1", "od_type": 'Iter', "od_wait":20,
+    params = {'iterations': 500, 'learning_rate': 0.05, 'depth': 2, 'l2_leaf_reg': 3.0, 'random_strength': 1, 'bagging_temperature': 1,
+              'bootstrap_type': "Bayesian", "loss_function": 'MultiClass', "eval_metric":"Accuracy", "random_seed": 42, "od_type": 'Iter', "od_wait":20,
                 "task_type":"GPU"}
     mdl = cb.CatBoostClassifier(**params)
     categorical_columns = list(xtrain.select_dtypes(exclude=["number"]).columns)
@@ -50,7 +50,7 @@ def error_rate(xtrain, ytrain, x, opts):
     ypred   = mdl.predict(xtest)
 
     error = zero_one_loss(ytest, ypred)
-    # error = 1- f1_score(yvalid, ypred, average='micro') 
+    # error = 1- f1_score(ytest, ypred, average='macro')
     
     return error
 
@@ -58,7 +58,7 @@ def error_rate(xtrain, ytrain, x, opts):
 # Error rate & Feature size
 def Fun(xtrain, ytrain, x, opts):
     # Parameters
-    alpha    = 0.99
+    alpha    = 0.995
     beta     = 1 - alpha
     # Original feature size
     max_feat = len(x)
