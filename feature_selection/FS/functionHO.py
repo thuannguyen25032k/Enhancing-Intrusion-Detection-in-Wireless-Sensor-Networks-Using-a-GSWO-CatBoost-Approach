@@ -1,9 +1,10 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import catboost as cb
-from sklearn.metrics import accuracy_score
-import xgboost as xgb
-from utils import TrainingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, zero_one_loss, f1_score
+from main import oversample_data
+# import xgboost as xgb
 
 # error rate
 def error_rate(xtrain, ytrain, x, opts):
@@ -14,39 +15,42 @@ def error_rate(xtrain, ytrain, x, opts):
     yt    = fold['yt']
     xv    = fold['xv']
     yv    = fold['yv']
-    
-    # Number of instances
-    num_train = np.size(xt, 0)
-    num_valid = np.size(xv, 0)
-    # Define selected features using numpy arrays for xtrain and ytrain, xvalid and yvalid
-    xtrain  = xt[:, x == 1]
-    ytrain  = yt.reshape(num_train)  # Solve bug
-    xvalid  = xv[:, x == 1]
-    yvalid  = yv.reshape(num_valid)  # Solve bug 
 
-    # Dèine selected features using dataframe for xtrain and ytrain, xvalid and yvalid
-    # xtrain  = xt.iloc[:, x==1]
-    # ytrain  = yt
-    # xvalid  = xv.iloc[:, x==1]
-    # yvalid  = yv
+    # Define selected features using dataframe for xtrain and ytrain, xvalid and yvalid
+    xtrain, xvalid, ytrain, yvalid = train_test_split(
+            xt.iloc[:, x==1],
+            yt,
+            test_size=0.3,
+            random_state=42,
+        )
+
+    xtest  = xv.iloc[:, x==1]
+    ytest  = yv
 
     # Training
     # mdl     = RandomForestClassifier(criterion='gini', max_depth=30, n_estimators=72, random_state=0, bootstrap=False, min_samples_split = 2)
     
     # Training new model 
-    mdl = TrainingClassifier() 
-
+    params = {'iterations': 500, 'learning_rate': 0.05, 'depth': 2, 'l2_leaf_reg': 3.0, 'random_strength': 1, 'bagging_temperature': 1,
+              'bootstrap_type': "Bayesian", "loss_function": 'MultiClass', "eval_metric":"Accuracy", "random_seed": 42, "od_type": 'Iter', "od_wait":20,
+                "task_type":"GPU"}
+    mdl = cb.CatBoostClassifier(**params)
+    categorical_columns = list(xtrain.select_dtypes(exclude=["number"]).columns)
+    categorical_features_indices = xtrain.columns.get_indexer(categorical_columns)
     
-    # print(xtrain)
-    mdl.fit(xtrain, ytrain, verbose=False)
-    # Prediction
-    ypred   = mdl.predict(xvalid)
-    # print("==========ypred=========:", ypred)
-    # print("==========yvalid=========:", yv)
-    # acc     = np.sum(yvalid == ypred) / num_valid
-    acc = accuracy_score(yvalid, ypred)
-    # print(acc)
-    error   = 1 - acc
+    # fit model
+    mdl.fit(
+            xtrain, ytrain, 
+            cat_features= categorical_features_indices,
+            eval_set=(xvalid, yvalid),
+            logging_level='Silent',
+            )
+    
+    # prediction 
+    ypred   = mdl.predict(xtest)
+
+    error = zero_one_loss(ytest, ypred)
+    # error = 1- f1_score(ytest, ypred, average='macro')
     
     return error
 
@@ -54,7 +58,7 @@ def error_rate(xtrain, ytrain, x, opts):
 # Error rate & Feature size
 def Fun(xtrain, ytrain, x, opts):
     # Parameters
-    alpha    = 0.99
+    alpha    = 0.995
     beta     = 1 - alpha
     # Original feature size
     max_feat = len(x)

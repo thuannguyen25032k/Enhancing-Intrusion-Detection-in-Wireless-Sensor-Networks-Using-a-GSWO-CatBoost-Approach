@@ -13,10 +13,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 # processing imports
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
-
-print("Welcome!")
 
 
 def load_data(data_dir, name):
@@ -86,7 +84,7 @@ def split_data(X, y):
     X_train, X_valid, y_train, y_valid = train_test_split(
             X,
             y,
-            test_size=0.2,
+            test_size=0.3,
             random_state=42
         )
     return (X_train, y_train), (X_valid, y_valid)
@@ -115,7 +113,7 @@ def UNSW_NB15_processing(data_dir):
     numeric_cols = list(raw_train_data.select_dtypes(include="number").columns)
     numeric_cols.remove("id")
     numeric_cols.remove("label")
-    scaler = StandardScaler()
+    scaler = StandardScaler(feature_range=(0, 1))
     train_data_X, test_data_X = scale(train_data_X, test_data_X, 
                                       numeric_cols, scaler)
     (X_train, y_train), (X_valid, y_valid) = split_data(train_data_X,train_data_Y)

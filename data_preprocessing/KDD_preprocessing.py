@@ -99,12 +99,17 @@ def visualize(transformed_data):
     data_attack_cats.plot(kind="barh", figsize=(20, 10), fontsize=30)
     plt.show()
 
+def shuffle_data(train_data, test_data):
+    entire_data = pd.concat([train_data, test_data])
+    train, test = train_test_split(entire_data, test_size=0.3, shuffle=True)
+    return train, test
+
 def split_data(X, y):
     """Split the data into train and validation"""
     X_train, X_valid, y_train, y_valid = train_test_split(
             X,
             y,
-            test_size=0.2,
+            test_size=0.3,
             random_state=42
         )
     return (X_train, y_train), (X_valid, y_valid)
@@ -138,10 +143,12 @@ def KDD_processing(data_dir):
     test_file_path = os.path.join(data_dir, "KDDTest+.txt")
     train_data = load_data(train_file_path)
     test_data = load_data(test_file_path)
+    train_data, test_data = shuffle_data(train_data, test_data)
 
     # Transforming the data
     train_data_X, train_data_Y = transform(train_data, attack_mapping)
     test_data_X, test_data_Y = transform(test_data, attack_mapping)
+    print(print(f"y_train: {train_data_Y.value_counts()}, y_test: {test_data_Y.value_counts()}"))
 
     # Visualizing the data
     # visualize(train_data)
@@ -173,6 +180,10 @@ def KDD_processing(data_dir):
     scaler = StandardScaler()
     train_data_X, test_data_X = scale(train_data_X, test_data_X, numeric_cols, scaler)
     (X_train, y_train), (X_valid, y_valid) = split_data(train_data_X,train_data_Y)
+    # print((X_train, y_train))
+    X_train.index = pd.RangeIndex(0, len(X_train), step=1) 
+    y_train.index = pd.RangeIndex(0, len(X_train), step=1)
+    # print((X_train, y_train))
     return (X_train, y_train), (X_valid, y_valid), (test_data_X, test_data_Y)
 
 

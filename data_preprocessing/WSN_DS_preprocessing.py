@@ -88,7 +88,7 @@ class WSNDSPreprocessor(object):
             test_size=self.testing_size / (self.validation_size + self.testing_size),
             random_state=42
         )
-    
+        print(f"y_total: {self.labels.value_counts()}, y_test: {y_test.value_counts()}")
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
     def scale(self, training_set, validation_set, testing_set):
@@ -122,9 +122,9 @@ class WSNDSPreprocessor(object):
 def WSNDS_processing(data_dir):
     wsnds = WSNDSPreprocessor(
         data_path=os.path.join(data_dir, "WSN-DS.csv"),
-        training_size=0.6,
+        training_size=0.5,
         validation_size=0.2,
-        testing_size=0.2
+        testing_size=0.3
     )
 
     # Read datasets

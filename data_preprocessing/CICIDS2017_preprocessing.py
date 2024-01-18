@@ -79,7 +79,7 @@ class CICIDS2017Preprocessor(object):
         # Drop the constant features
         self.data.drop(labels=constant_features, axis=1, inplace=True)
 
-    def remove_correlated_features(self, threshold=0.98):
+    def remove_correlated_features(self, threshold=0.99):
         """"""
         # Correlation matrix
         data_corr = self.data.corr()
@@ -115,8 +115,27 @@ class CICIDS2017Preprocessor(object):
             'Infiltration': 'Infiltration'
         }
 
+        # attack_group = {
+        #     'BENIGN': 'Benign',
+        #     'PortScan': 'PortScan',
+        #     'DDoS': 'DDoS',
+        #     'DoS Hulk': 'DoS Hulk',
+        #     'DoS GoldenEye': 'DoS GoldenEye',
+        #     'DoS slowloris': 'DoS slowloris', 
+        #     'DoS Slowhttptest': 'DoS Slowhttptest',
+        #     'Heartbleed': 'Heartbleed',
+        #     'FTP-Patator': 'FTP-Patator',
+        #     'SSH-Patator': 'SSH-Patator',
+        #     'Bot': 'Botnet ARES',
+        #     'Web Attack � Brute Force': 'Web Attack Brute Force',
+        #     'Web Attack � Sql Injection': 'Web Attack Sql Injection',
+        #     'Web Attack � XSS': 'Web Attack XSS',
+        #     'Infiltration': 'Infiltration'
+        # }
+
         # Create grouped label column
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
+        self.data = self.data.drop(self.data[self.data['label_category']=="Benign"].sample(frac=0.84).index)
         
     def train_valid_test_split(self):
         """"""
@@ -136,7 +155,7 @@ class CICIDS2017Preprocessor(object):
             test_size=self.testing_size / (self.validation_size + self.testing_size),
             random_state=42
         )
-    
+        print(f"y_total: {self.labels.value_counts()}, y_test: {y_test.value_counts()}")
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
     def scale(self, training_set, validation_set, testing_set):
@@ -169,9 +188,9 @@ class CICIDS2017Preprocessor(object):
 def CICIDS2017_processing(data_dir):
     cicids2017 = CICIDS2017Preprocessor(
         data_path=os.path.join(data_dir, "MachineLearningCVE"),
-        training_size=0.6,
+        training_size=0.5,
         validation_size=0.2,
-        testing_size=0.2
+        testing_size=0.3
     )
 
     # Read datasets
@@ -194,6 +213,8 @@ def CICIDS2017_processing(data_dir):
     # Split & Normalise data sets
     training_set, validation_set, testing_set            = cicids2017.train_valid_test_split()
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
+    X_train.index = pd.RangeIndex(0, len(X_train), step=1) 
+    y_train.index = pd.RangeIndex(0, len(X_train), step=1)
     # print(X_test, y_test)
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
