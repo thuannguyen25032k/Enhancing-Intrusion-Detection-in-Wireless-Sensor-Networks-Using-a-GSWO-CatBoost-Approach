@@ -10,7 +10,7 @@ exploitation and enhances global search abilities. Additionally, the CatBoost mo
 employed for classification, effectively handling categorical data with complex patterns. A 
 new technique for fine-tuning CatBoost's hyperparameters is introduced, using effective 
 quantization and the GSWO strategy. Extensive experimentation on various datasets 
-demonstrates the superiority of GSWO-CatBoost, achieving higher accuracy rates on the  
+demonstrates the superiority of GSWO-CatBoost, achieving higher accuracy rates on the 
 WSN-DS, WSNBFSF, NSL-KDD, and CICIDS2017 datasets than the existing approaches. 
 The comprehensive evaluations highlight the real-time applicability and accuracy of the 
 proposed method across diverse data sources, including specialized WSN datasets and 
