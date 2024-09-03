@@ -20,9 +20,9 @@ def catboost_cv(depth, learning_rate, iterations, random_strength, l2_leaf_reg):
         valid_y = le.fit_transform(valid_y)
         test_y = le.fit_transform(test_y)
         sel_cols = [0, 1, 2, 4, 15, 21, 22, 23, 26, 27, 31, 32, 33, 34, 35, 36, 38, 40, 41]
-        X_train = X_train.iloc[:, sel_cols]
-        X_valid = X_valid.iloc[:, sel_cols]
-        X_test = X_test.iloc[:, sel_cols]
+        X_train = train_x.iloc[:, sel_cols]
+        X_valid = valid_x.iloc[:, sel_cols]
+        X_test = test_x.iloc[:, sel_cols]
     elif data_name == "CICIDS2017":
         print("Preprocessing for CICIDS2017")
         data_dir = "./data/CICIDS17/MachineLearningCSV"
@@ -31,9 +31,9 @@ def catboost_cv(depth, learning_rate, iterations, random_strength, l2_leaf_reg):
         valid_y = le.fit_transform(valid_y)
         test_y = le.fit_transform(test_y)
         sel_cols = [0, 1, 8, 10, 13, 24, 25, 31, 34, 41,  42, 44, 57, 65]
-        train_x = train_x.iloc[:, sel_cols]
-        valid_x = valid_x.iloc[:, sel_cols]
-        test_x = test_x.iloc[:, sel_cols]
+        X_train = train_x.iloc[:, sel_cols]
+        X_valid = valid_x.iloc[:, sel_cols]
+        X_test = test_x.iloc[:, sel_cols]
     elif data_name == "CICIDS2019":
         (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = CICIDS2019_processing(data_dir)
     elif data_name == "WSNDS":
@@ -44,9 +44,9 @@ def catboost_cv(depth, learning_rate, iterations, random_strength, l2_leaf_reg):
         valid_y = le.fit_transform(valid_y)
         test_y = le.fit_transform(test_y)
         sel_cols = [0, 5, 6, 8, 9, 13, 14, 15, 17]
-        X_train = X_train.iloc[:, sel_cols]
-        X_valid = X_valid.iloc[:, sel_cols]
-        X_test = X_test.iloc[:, sel_cols]
+        X_train = train_x.iloc[:, sel_cols]
+        X_valid = valid_x.iloc[:, sel_cols]
+        X_test = test_x.iloc[:, sel_cols]
     elif data_name == "UNSW_NB15":
         (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = UNSW_NB15_processing(data_dir)
     elif data_name == "WSNBFSF":
@@ -57,9 +57,9 @@ def catboost_cv(depth, learning_rate, iterations, random_strength, l2_leaf_reg):
         valid_y = le.fit_transform(valid_y)
         test_y = le.fit_transform(test_y)
         sel_cols = [0, 3, 4, 10, 12]
-        X_train = X_train.iloc[:, sel_cols]
-        X_valid = X_valid.iloc[:, sel_cols]
-        X_test = X_test.iloc[:, sel_cols]
+        X_train = train_x.iloc[:, sel_cols]
+        X_valid = valid_x.iloc[:, sel_cols]
+        X_test = test_x.iloc[:, sel_cols]
     else:
         print("This type of data has not been processed yet")
     depth = int(depth)
@@ -87,7 +87,7 @@ def catboost_cv(depth, learning_rate, iterations, random_strength, l2_leaf_reg):
     )
  
     # Perform cross-validation and return the mean R-squared score (for regression)
-    cross_val_scores = cross_val_score(model, train_x, train_y, cv=3, scoring="accuracy")
+    cross_val_scores = cross_val_score(model, X_train, train_y, cv=3, scoring="accuracy")
  
     return cross_val_scores.mean()
 
