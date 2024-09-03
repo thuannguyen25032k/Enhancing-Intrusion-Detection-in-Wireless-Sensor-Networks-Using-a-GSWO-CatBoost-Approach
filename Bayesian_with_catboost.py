@@ -87,7 +87,7 @@ def catboost_cv(depth, learning_rate, iterations, random_strength, l2_leaf_reg):
     )
  
     # Perform cross-validation and return the mean R-squared score (for regression)
-    cross_val_scores = cross_val_score(model, X_train, train_y, cv=3, scoring="accuracy")
+    cross_val_scores = cross_val_score(model, train_x, train_y, cv=3, scoring="accuracy")
  
     return cross_val_scores.mean()
 
